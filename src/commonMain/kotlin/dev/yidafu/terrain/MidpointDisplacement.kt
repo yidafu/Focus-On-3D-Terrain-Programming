@@ -1,10 +1,12 @@
 package dev.yidafu.terrain
 
+import dev.yidafu.terrain.core.HeightMap
 import dev.yidafu.terrain.core.HeightMapImpl
 import dev.yidafu.terrain.core.Vertex
 import dev.yidafu.terrain.ext.getVertex
 import dev.yidafu.terrain.ext.randomNext
 import dev.yidafu.terrain.ext.setVertex
+import dev.yidafu.terrain.ext.toUByteArray
 import kotlin.math.pow
 
 /**
@@ -14,11 +16,10 @@ import kotlin.math.pow
 class MidpointDisplacement(
     roughness: Double,
     size: Int = 512,
-    heightmap: HeightMapImpl = HeightMapImpl.empty(),
-) : Terrain(size, heightmap) {
-    val roughnessValue = 2.0.pow(-roughness)
+) : Terrain(size) {
+    private val roughnessValue = 2.0.pow(-roughness)
 
-    override fun render() {
+    override fun generate(): HeightMap {
 //        assert(size % 4 == 0) {
 //            "heightmap width($size) must be multiple of 4"
 //        }
@@ -41,7 +42,7 @@ class MidpointDisplacement(
             bottomLeft,
         )
 
-//        heightmap = HeightMapImpl(size, matrix.toUByteArray())
+        return HeightMapImpl(size + 1, matrix.toUByteArray())
     }
 
     private fun calculateMidpoint(

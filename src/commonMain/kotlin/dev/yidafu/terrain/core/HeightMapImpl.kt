@@ -1,10 +1,12 @@
 package dev.yidafu.terrain.core
 
 interface HeightMap {
+    val size: Int
+
     fun get(
         x: Int,
         y: Int,
-        value: UByte,
+//        value: UByte,
     ): UByte
 
     fun get(p: Vertex): UByte
@@ -27,7 +29,7 @@ interface HeightMap {
 }
 
 class HeightMapImpl(
-    val size: Int,
+    override val size: Int,
     @OptIn(ExperimentalUnsignedTypes::class) val mData: UByteArray = UByteArray(size),
 ) : HeightMap {
     var heightScale: Float = 1f
@@ -39,7 +41,7 @@ class HeightMapImpl(
     override fun get(
         x: Int,
         y: Int,
-        value: UByte,
+//        value: UByte,
     ): UByte = mData.get(x, y)
 
     override fun get(p: Vertex): UByte = mData.get(p)
@@ -59,6 +61,14 @@ class HeightMapImpl(
         x: Int,
         y: Int,
     ): Float = mData.get(x, y).toFloat() * heightScale
+}
+
+inline fun HeightMap.grid(cb: (x: Int, y: Int, value: UByte) -> Unit) {
+    for (y in 0..<size) {
+        for (x in 0..<size) {
+            cb(x, y, get(x, y))
+        }
+    }
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)

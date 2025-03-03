@@ -4,9 +4,8 @@ import dev.yidafu.terrain.core.HeightMap
 
 abstract class Terrain(
     open val size: Int,
-    val heightMap: HeightMap,
-) : HeightMap by heightMap {
-    abstract fun render()
+) {
+    abstract fun generate(): HeightMap
 
 //    abstract fun load(filepath: String)
 //

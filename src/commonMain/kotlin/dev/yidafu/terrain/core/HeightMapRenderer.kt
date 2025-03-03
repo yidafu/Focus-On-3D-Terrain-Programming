@@ -1,7 +1,8 @@
 package dev.yidafu.terrain.core
 
 expect class HeightMapRenderer(
-    hMap: HeightMapImpl,
+    size: Int,
+    heightMap: HeightMap,
 ) {
     fun render()
 }

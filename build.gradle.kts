@@ -31,14 +31,16 @@ kotlin {
         }
 
         val jsMain by getting {
+
             dependencies {
             }
         }
 
         jvmMain {
             dependencies {
-                implementation("org.jogamp.gluegen:gluegen-rt-main:2.4.0")
-                implementation("org.jogamp.jogl:jogl-all-main:2.4.0")
+                implementation("org.jogamp.gluegen:gluegen-rt-main:2.5.0")
+                implementation("org.jogamp.jogl:jogl-all-main:2.5.0")
+                implementation("org.joml:joml:1.10.5")
             }
         }
     }
@@ -51,4 +53,9 @@ tasks.withType<KotlinJsCompile>().configureEach {
     kotlinOptions {
         target = "es2015"
     }
+}
+
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().download = false
+    // "true" for default behavior
 }

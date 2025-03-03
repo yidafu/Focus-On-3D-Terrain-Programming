@@ -1,6 +1,5 @@
 package dev.yidafu.terrain.flatiron
 
-import dev.yidafu.terrain.dev.yidafu.terrain.flatiron.Flatiron
 import kotlin.math.sqrt
 
 /**

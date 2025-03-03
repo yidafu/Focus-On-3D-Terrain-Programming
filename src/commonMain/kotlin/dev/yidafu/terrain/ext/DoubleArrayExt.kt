@@ -1,6 +1,7 @@
 package dev.yidafu.terrain.ext
 
-import dev.yidafu.terrain.dev.yidafu.terrain.core.Vertex
+import dev.yidafu.terrain.assert
+import dev.yidafu.terrain.core.Vertex
 import kotlin.math.floor
 import kotlin.math.sqrt
 

@@ -1,5 +1,6 @@
 package dev.yidafu.terrain
 
+import dev.yidafu.terrain.core.HeightMap
 import dev.yidafu.terrain.core.HeightMapImpl
 import dev.yidafu.terrain.core.Vertex
 import dev.yidafu.terrain.ext.grid
@@ -7,12 +8,12 @@ import dev.yidafu.terrain.ext.toUByteArray
 import dev.yidafu.terrain.flatiron.SimpleFlatiron
 import kotlin.random.Random
 
-abstract class FaultFormation(
+class FaultFormation(
     private val iterations: Int = 32,
     size: Int = 128,
-) : Terrain(size, HeightMapImpl(size)) {
+) : Terrain(size) {
     @OptIn(ExperimentalUnsignedTypes::class)
-    override fun render() {
+    override fun generate(): HeightMap {
         val tempBuffer = FloatArray(size * size) { 0.0f }
         // 迭代
         (1..iterations).forEach {
@@ -23,6 +24,7 @@ abstract class FaultFormation(
 //        heightMap = HeightMapImpl(size, tempBuffer.toUByteArray())
 
 //        HeightMapRenderer(heightMap!!).render()
+        return HeightMapImpl(size, tempBuffer.toUByteArray())
     }
 
     private fun random(): Int = Random.nextInt(size)
