@@ -5,8 +5,6 @@ import com.jogamp.opengl.GLProfile
 import com.jogamp.opengl.awt.GLCanvas
 import com.jogamp.opengl.util.Animator
 import dev.yidafu.terrain.renderer.GLRenderer
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 import javax.swing.JFrame
 
 
@@ -17,9 +15,9 @@ class JvmGLRenderer : GLRenderer() {
 
         val canvas: GLCanvas = GLCanvas(capabilities)
         val animator = Animator(canvas)
-        val surface = TriangleSurface()
+        val surface = CoordinatePanel()
         canvas.addGLEventListener(surface)
-        canvas.addKeyListener(surface)
+//        canvas.addKeyListener(surface)
 
         val frame = JFrame("JOGL Triangle")
         frame.setSize(800, 600)
@@ -27,7 +25,7 @@ class JvmGLRenderer : GLRenderer() {
         frame.contentPane.add(canvas)
         frame.isVisible = true
 
-        animator.start()
+//        animator.start()
     }
 
 }
