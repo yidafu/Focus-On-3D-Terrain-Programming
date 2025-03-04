@@ -7,20 +7,33 @@ import com.jogamp.opengl.GLEventListener
 import com.jogamp.opengl.util.GLBuffers
 import org.joml.Matrix4f
 import org.joml.Vector3f
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sin
 
-class CoordinatePanel : GLEventListener {
+class CoordinatePanel :
+    GLEventListener,
+    KeyListener {
     private var shaderProgram = 0
 
     private val vao = IntArray(4)
     private val vbo = IntArray(4)
 
     private var aspectRatio = 800f / 600f
+    private var yaw = -90.0f // 初始偏航角
+    private var pitch = 0.0f
+    private val rotateSpeed = 2.0f // 旋转速度（度/帧）
+    var distance: Float = 3.0f // 相机到原点的距离
 
     // 平面顶点数据
     val planes =
-        arrayOf( // X-Y plane (Z=0)
+        arrayOf(
+            // X-Y plane (Z=0)
             floatArrayOf(
                 -1f,
                 -1f,
@@ -101,7 +114,6 @@ void main() {
     fragColor = vec4(Color, 0.3);
 }"""
 
-
     private var shaderProgram2 = 0
     private var vbo2: Int = 0
     private var vao2: Int = 0
@@ -127,7 +139,6 @@ void main() {
             -0.7f,
             0.9f, // v5 右下
         )
-
 
     private val vertexShaderSource2 =
         """
@@ -155,10 +166,10 @@ void main() {
              FragColor = vec4(r,  g, b, 1.0);
         }
         """.trimIndent()
+
     override fun init(drawable: GLAutoDrawable) {
         val gl = drawable.gl.gL3
         gl.glEnable(GL3.GL_DEPTH_TEST)
-
 
         val vertexShader = compileShader(gl, GL3.GL_VERTEX_SHADER, vertexShaderCode)
         val fragmentShader = compileShader(gl, GL3.GL_FRAGMENT_SHADER, fragmentShaderCode)
@@ -167,7 +178,6 @@ void main() {
         gl.glAttachShader(shaderProgram, vertexShader)
         gl.glAttachShader(shaderProgram, fragmentShader)
         gl.glLinkProgram(shaderProgram)
-
 
         val vertexShader2 = compileShader(gl, GL3.GL_VERTEX_SHADER, vertexShaderSource2)
         val fragmentShader2 = compileShader(gl, GL3.GL_FRAGMENT_SHADER, fragmentShaderSource2)
@@ -222,7 +232,6 @@ void main() {
         // 解绑
         gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0)
         gl.glBindVertexArray(0)
-
     }
 
     override fun display(drawable: GLAutoDrawable) {
@@ -232,18 +241,7 @@ void main() {
 
         gl.glUseProgram(shaderProgram)
 
-        // 设置视图矩阵
-        val projection: Matrix4f =
-            Matrix4f().perspective(Math.toRadians(45.0).toFloat(), aspectRatio, 0.1f, 100.0f)
-        val view: Matrix4f = Matrix4f()
-            .lookAt(
-                Vector3f(1F, 0F, 3F),
-                Vector3f(0F, 0F, 0F),
-                Vector3f(1F, 1F, 0F)
-            )
-        val model = Matrix4f()
-        val mvp: Matrix4f = projection.mul(view).mul(model)
-
+        val mvp = updateViewMatrix()
         val mvpBuffer = Buffers.newDirectFloatBuffer(16)
         mvp.get(mvpBuffer)
         val mvpLoc = gl.glGetUniformLocation(shaderProgram, "mvpMatrix")
@@ -254,18 +252,17 @@ void main() {
         gl.glBindVertexArray(vao[0])
         gl.glDrawArrays(GL3.GL_TRIANGLES, 0, 6)
 
-        // 绘制Y-Z平面（红色）
-        gl.glUniform3f(gl.glGetUniformLocation(shaderProgram, "color"), 1f, 0f, 0f)
-        gl.glBindVertexArray(vao[1])
-        gl.glDrawArrays(GL3.GL_TRIANGLES, 0, 6)
+//        // 绘制Y-Z平面（红色）
+//        gl.glUniform3f(gl.glGetUniformLocation(shaderProgram, "color"), 1f, 0f, 0f)
+//        gl.glBindVertexArray(vao[1])
+//        gl.glDrawArrays(GL3.GL_TRIANGLES, 0, 6)
 
-//        // 绘制X-Z平面（绿色）
+        // 绘制X-Z平面（绿色）
 //        gl.glUniform3f(gl.glGetUniformLocation(shaderProgram, "color"), 0f, 1f, 0f)
 //        gl.glBindVertexArray(vao[2])
 //        gl.glDrawArrays(GL3.GL_TRIANGLES, 0, 6)
 
         // 绘制三角曲面
-//        gl.glUniform3f(gl.glGetUniformLocation(shaderProgram, "color"), 1f, 1f, 0f)
         gl.glUseProgram(shaderProgram2)
         val mvpLoc2 = gl.glGetUniformLocation(shaderProgram2, "mvpMatrix")
         gl.glUniformMatrix4fv(mvpLoc2, 1, false, mvpBuffer)
@@ -295,6 +292,30 @@ void main() {
         gl.glDeleteProgram(shaderProgram)
     }
 
+    private fun updateViewMatrix(): Matrix4f {
+        val radYaw = Math.toRadians(yaw.toDouble()).toFloat()
+        val radPitch = Math.toRadians(pitch.toDouble()).toFloat()
+
+        val eyeX: Float = distance * (sin(radYaw.toDouble()) * cos(radPitch.toDouble())).toFloat()
+        val eyeY: Float = (distance * sin(radPitch.toDouble())).toFloat()
+        val eyeZ: Float = distance * (cos(radYaw.toDouble()) * cos(radPitch.toDouble())).toFloat()
+        val eye = Vector3f(eyeX, eyeY, eyeZ)
+
+        // 设置视图矩阵
+        val projection: Matrix4f =
+            Matrix4f().perspective(Math.toRadians(45.0).toFloat(), aspectRatio, 0.1f, 100.0f)
+        val view: Matrix4f =
+            Matrix4f()
+                .lookAt(
+                    eye,
+                    Vector3f(0F, 0F, 0F),
+                    Vector3f(0F, 0F, 1F),
+                )
+        val model = Matrix4f()
+        val mvp: Matrix4f = projection.mul(view).mul(model)
+        return mvp
+    }
+
     private fun compileShader(
         gl: GL3,
         type: Int,
@@ -311,5 +332,25 @@ void main() {
             return 0
         }
         return shader
+    }
+
+    override fun keyTyped(p0: KeyEvent?) {
+    }
+
+    override fun keyPressed(p0: KeyEvent?) {
+        val keyCode = p0?.keyCode
+        when (keyCode) {
+            KeyEvent.VK_LEFT -> yaw -= rotateSpeed // 左键：向左旋转
+            KeyEvent.VK_RIGHT -> yaw += rotateSpeed // 右键：向右旋转
+            KeyEvent.VK_UP -> pitch += rotateSpeed // 上键：向上抬头
+            KeyEvent.VK_DOWN -> pitch -= rotateSpeed // 下键：向下低头
+        }
+
+        // 限制俯仰角范围
+        pitch = max(-89.0f, min(89.0f, pitch))
+        yaw %= 360.0f; // 保证Yaw在[0, 360)
+    }
+
+    override fun keyReleased(p0: KeyEvent?) {
     }
 }

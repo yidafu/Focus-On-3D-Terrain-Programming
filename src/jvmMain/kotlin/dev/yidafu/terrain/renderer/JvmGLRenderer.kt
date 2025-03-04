@@ -17,7 +17,7 @@ class JvmGLRenderer : GLRenderer() {
         val animator = Animator(canvas)
         val surface = CoordinatePanel()
         canvas.addGLEventListener(surface)
-//        canvas.addKeyListener(surface)
+        canvas.addKeyListener(surface)
 
         val frame = JFrame("JOGL Triangle")
         frame.setSize(800, 600)
@@ -25,7 +25,7 @@ class JvmGLRenderer : GLRenderer() {
         frame.contentPane.add(canvas)
         frame.isVisible = true
 
-//        animator.start()
+        animator.start()
     }
 
 }
