@@ -16,7 +16,30 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
-class CoordinatePanel :
+class CoordinatePanel(
+    private val stripList: List<List<Float>> = listOf(
+        listOf(
+            -0.5f,
+            0.5f,
+            0.5f, // v0 左上
+            -0.5f,
+            -0.5f,
+            0.0f, // v1 左下
+            -0.2f,
+            0.5f,
+            -0.7f, // v2 中上
+            0.1f,
+            -0.5f,
+            0.3f, // v3 中下
+            0.4f,
+            0.4f,
+            0.1f, // v4 右上
+            0.5f,
+            -0.7f,
+            0.9f, // v5 右下
+        )
+    )
+) :
     GLEventListener,
     KeyListener {
     private var shaderProgram = 0
@@ -115,30 +138,9 @@ void main() {
 }"""
 
     private var shaderProgram2 = 0
-    private var vbo2: Int = 0
-    private var vao2: Int = 0
+    private var stripVbo: IntArray = IntArray(stripList.size)
+    private var stripVao: IntArray = IntArray(stripList.size)
 
-    private val vertices: List<Float> =
-        listOf(
-            -0.5f,
-            0.5f,
-            0.5f, // v0 左上
-            -0.5f,
-            -0.5f,
-            0.0f, // v1 左下
-            -0.2f,
-            0.5f,
-            -0.7f, // v2 中上
-            0.1f,
-            -0.5f,
-            0.3f, // v3 中下
-            0.4f,
-            0.4f,
-            0.1f, // v4 右上
-            0.5f,
-            -0.7f,
-            0.9f, // v5 右下
-        )
 
     private val vertexShaderSource2 =
         """
@@ -160,10 +162,10 @@ void main() {
          out vec4 FragColor; // 最终颜色输出
          void main() {
              // 基于归一化位置的颜色混合（范围 [-1,1] 转为 [0,1]）
-             float r = (FragPos.x + 1.0) * 0.5; // X轴：红
-             float g = (FragPos.y + 1.0) * 0.5; // Y轴：绿
-             float b = 0.5;                     // 固定蓝
-             FragColor = vec4(r,  g, b, 1.0);
+             float r = FragPos.z; // X轴：红
+             float g = FragPos.z; // Y轴：绿
+             float b = FragPos.z;                     // 固定蓝
+             FragColor = vec4(r, g, b, 1.0);
         }
         """.trimIndent()
 
@@ -206,28 +208,29 @@ void main() {
         }
 
         // 创建并绑定VAO
-        val vaoArray = IntArray(1)
-        gl.glGenVertexArrays(1, vaoArray, 0)
-        vao2 = vaoArray[0]
-        gl.glBindVertexArray(vao2)
+        stripVao = IntArray(stripList.size)
+        gl.glGenVertexArrays(stripList.size, stripVao, 0)
 
         // 创建并绑定VBO
-        val vboArray = IntArray(1)
-        gl.glGenBuffers(1, vboArray, 0)
-        vbo2 = vboArray[0]
-        gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, vbo2)
-        // 将顶点数据复制到缓冲区
-        val vertexBuffer: FloatBuffer = GLBuffers.newDirectFloatBuffer(vertices.toFloatArray())
-        gl.glBufferData(
-            GL3.GL_ARRAY_BUFFER,
-            (vertices.size * java.lang.Float.BYTES).toLong(),
-            vertexBuffer,
-            GL3.GL_STATIC_DRAW,
-        )
-        // 设置顶点属性指针
-        gl.glVertexAttribPointer(0, 3, GL3.GL_FLOAT, false, 0, 0)
-        gl.glEnableVertexAttribArray(0)
-        gl.glBindVertexArray(0)
+        stripVbo = IntArray(stripList.size)
+        gl.glGenBuffers(stripList.size, stripVbo, 0)
+
+        for (i in stripList.indices) {
+            gl.glBindVertexArray(stripVao[i])
+            gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, stripVbo[i])
+            // 将顶点数据复制到缓冲区
+            val vertexBuffer: FloatBuffer = GLBuffers.newDirectFloatBuffer(stripList[i].toFloatArray())
+            gl.glBufferData(
+                GL3.GL_ARRAY_BUFFER,
+                (stripList[i].size * java.lang.Float.BYTES).toLong(),
+                vertexBuffer,
+                GL3.GL_STATIC_DRAW,
+            )
+            // 设置顶点属性指针
+            gl.glVertexAttribPointer(0, 3, GL3.GL_FLOAT, false, 0, 0)
+            gl.glEnableVertexAttribArray(0)
+            gl.glBindVertexArray(0)
+        }
 
         // 解绑
         gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0)
@@ -263,11 +266,15 @@ void main() {
 //        gl.glDrawArrays(GL3.GL_TRIANGLES, 0, 6)
 
         // 绘制三角曲面
+
         gl.glUseProgram(shaderProgram2)
         val mvpLoc2 = gl.glGetUniformLocation(shaderProgram2, "mvpMatrix")
         gl.glUniformMatrix4fv(mvpLoc2, 1, false, mvpBuffer)
-        gl.glBindVertexArray(vao2)
-        gl.glDrawArrays(GL3.GL_TRIANGLE_STRIP, 0, 6)
+
+        for (i in stripList.indices) {
+            gl.glBindVertexArray(stripVao[i])
+            gl.glDrawArrays(GL3.GL_TRIANGLE_STRIP, 0, stripList[i].size / 3)
+        }
 
         gl.glBindVertexArray(0)
         gl.glUseProgram(0)

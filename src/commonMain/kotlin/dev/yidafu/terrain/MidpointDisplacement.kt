@@ -11,7 +11,7 @@ import kotlin.math.pow
 
 /**
  * @url https://stevelosh.com/blog/2016/02/midpoint-displacement/
- * @see explaintion https://craftofcoding.wordpress.com/2021/07/09/midpoint-displacement-in-2d/
+ * @url https://craftofcoding.wordpress.com/2021/07/09/midpoint-displacement-in-2d/
  */
 class MidpointDisplacement(
     roughness: Double,
