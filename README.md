@@ -4,4 +4,4 @@
 
 3D Terrain 1
 
-![screenshot-1.png](./images/screenshot-1.png)
+![screenshot-1.png](./images/kool-1.png)
