@@ -1,16 +1,15 @@
 package dev.yidafu.terrain
 
 import de.fabmax.kool.KoolContext
-import de.fabmax.kool.math.MutableVec3f
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslPbrShader
 import de.fabmax.kool.scene.addColorMesh
 import de.fabmax.kool.scene.defaultOrbitCamera
-import de.fabmax.kool.scene.geometry.PrimitiveType
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.debugOverlay
 import dev.yidafu.terrain.core.HeightMap
+import dev.yidafu.terrain.kool.addTriangulatedMesh
 
 private fun HeightMap.getVector3f(
     x: Int,
@@ -46,29 +45,13 @@ fun launchApp(ctx: KoolContext) {
             defaultOrbitCamera()
             addColorMesh {
                 generate {
-                    cube {
-                        colored()
-                    }
-//                    grid {
-//                        sizeY = 32f
-//                        sizeX = 32f
-//                        color = Color.RED
-//                    }
-//                    grid {
-//                        sizeY = 32f
-//                        sizeX = 32f
-//                        color = Color.BLUE
-//                        xDir.set(Vec3f.Y_AXIS)
-//                    }
 
-//                    grid {
-//                        sizeY = 32f
-//                        sizeX = 32f
-//                        color = Color.GREEN
-//                        texCoordOffset.set(32f, 16f)
-//                        xDir.set(Vec3f.NEG_X_AXIS)
-//                        yDir.set(Vec3f.NEG_Y_AXIS)
-//                    }
+                    grid {
+                        sizeY = 32f
+                        sizeX = 32f
+                        xDir.set(Vec3f.X_AXIS)
+                        yDir.set(Vec3f.NEG_Y_AXIS)
+                    }
                 }
                 shader =
                     KslPbrShader {
@@ -77,31 +60,14 @@ fun launchApp(ctx: KoolContext) {
                         roughness(0.25f)
                     }
             }
-            stripList.forEach {
-                addColorMesh(
-                    name = "colorMesh2",
-                    primitiveType = PrimitiveType.TRIANGLE_STRIP,
-                ) {
-                    generate {
-                        triangularSurface(
-                            TriangularSurfaceProps().apply {
-                                triangles.addAll(it)
-                            },
-                        )
-                    }
-                    shader =
-                        KslPbrShader {
-                            color { vertexColor() }
-                            metallic(0f)
-                            roughness(0.25f)
-                        }
-                }
 
+            stripList.forEachIndexed {idx,list ->
+                addTriangulatedMesh(makeChildName("mesh-$idx"), list)
             }
 
             // set up a single light source
             lighting.singleDirectionalLight {
-                setup(Vec3f(-1f, -1f, -1f))
+                setup(Vec3f(1f, 1f, 1f))
                 setColor(Color.WHITE, 5f)
             }
         }
